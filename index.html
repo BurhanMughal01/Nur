@@ -259,7 +259,31 @@ function resetTasbeeh(){if(confirm(S.lang==='ur'?'ری سیٹ کریں؟':'Reset
 function renderDuas(){document.getElementById('duaList').innerHTML=DUAS.map(d=>'<div class="dua-item"><div class="dua-t">'+(S.lang==='ur'?d.t_ur:d.t_en)+'</div><div class="dua-ar">'+d.a+'</div><div class="dua-m">'+(S.lang==='ur'?d.m_ur:d.m_en)+'</div></div>').join('')}
 function changeCity(){const c=prompt(S.lang==='ur'?'شہر (انگریزی):':'City:',S.city);if(!c)return;const co=prompt(S.lang==='ur'?'ملک:':'Country:',S.country);if(!co)return;S.city=c;S.country=co;localStorage.setItem('nur_city',c);localStorage.setItem('nur_country',co);document.getElementById('sCity').textContent=c;loadHome()}
 function qiblaBearing(lat,lng){const kLat=21.4225*Math.PI/180,kLng=39.8262*Math.PI/180,p1=lat*Math.PI/180,p2=kLat,dL=kLng-lng*Math.PI/180;const y=Math.sin(dL),x=Math.cos(p1)*Math.tan(p2)-Math.sin(p1)*Math.cos(dL);return(Math.atan2(y,x)*180/Math.PI+360)%360}
-function startQibla(){window._qiblaStarted=1;const ci=document.getElementById('cInfo');ci.textContent=S.lang==='ur'?'لوکیشن حاصل ہو رہی ہے...':'Getting location...';if(!navigator.geolocation){ci.textContent=t('noLoc');return}navigator.geolocation.getCurrentPosition(pos=>{const lat=pos.coords.latitude,lng=pos.coords.longitude;const brng=qiblaBearing(lat,lng);window._qiblaBrng=brng;document.getElementById('cDeg').textContent=brng.toFixed(1)+'°';ci.innerHTML='📍 '+lat.toFixed(4)+', '+lng.toFixed(4)+'<br>'+(S.lang==='ur'?'قبلہ کا زاویہ: ':'Qibla bearing: ')+'<b style="color:var(--primary)">'+brng.toFixed(1)+'°</b>';const h=e=>{const comp=e.webkitCompassHeading||(e.alpha!=null?360-e.alpha:null);if(comp==null)return;document.getElementById('cArrow').style.transform='rotate('+(brng-comp)+'deg)'};window.addEventListener('deviceorientationabsolute',h,true);window.addEventListener('deviceorientation',h,true)},err=>{ci.textContent=t('noLoc')})}
+window._qiblaOrientationHandler=null;
+function startQibla(){
+window._qiblaStarted=1;
+const ci=document.getElementById('cInfo');
+ci.textContent=S.lang==='ur'?'لوکیشن حاصل ہو رہی ہے...':'Getting location...';
+if(!navigator.geolocation){ci.textContent=t('noLoc');return}
+if(window._qiblaOrientationHandler){
+window.removeEventListener('deviceorientationabsolute',window._qiblaOrientationHandler,true);
+window.removeEventListener('deviceorientation',window._qiblaOrientationHandler,true);
+}
+navigator.geolocation.getCurrentPosition(pos=>{
+const lat=pos.coords.latitude,lng=pos.coords.longitude;
+const brng=qiblaBearing(lat,lng);
+window._qiblaBrng=brng;
+document.getElementById('cDeg').textContent=brng.toFixed(1)+'°';
+ci.innerHTML='📍 '+lat.toFixed(4)+', '+lng.toFixed(4)+'<br>'+(S.lang==='ur'?'قبلہ کا زاویہ: ':'Qibla bearing: ')+'<b style="color:var(--primary)">'+brng.toFixed(1)+'°</b>';
+window._qiblaOrientationHandler=e=>{
+const comp=e.webkitCompassHeading||(e.alpha!=null?360-e.alpha:null);
+if(comp==null)return;
+document.getElementById('cArrow').style.transform='rotate('+(brng-comp)+'deg)';
+};
+window.addEventListener('deviceorientationabsolute',window._qiblaOrientationHandler,true);
+window.addEventListener('deviceorientation',window._qiblaOrientationHandler,true);
+},err=>{ci.textContent=t('noLoc')},{enableHighAccuracy:true,timeout:10000});
+}
 function init(){applyTheme();setLang(S.lang);renderDuas();initT();document.getElementById('sCity').textContent=S.city;loadHome();loadQuran();setTimeout(()=>document.getElementById('spl').classList.add('hide'),1200)}
 window.addEventListener('load',init);
 </script>
